@@ -141,7 +141,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('text-to-prompt');
   const [structures, setStructures] = useState(INITIAL_PROMPT_STRUCTURES);
   const [selectedModel, setSelectedModel] = useState('qwen3.5-plus');
-  const [apiSettings, setApiSettings] = useState({ key: '', baseUrl: 'https://api.codingplan.com/v1' });
+  const [apiSettings, setApiSettings] = useState({ key: 'sk-sp-5ec93b5673844400855b03db10156bbb', baseUrl: '/api' });
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [chatSessionId, setChatSessionId] = useState(() => Date.now().toString()); 
