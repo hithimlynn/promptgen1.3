@@ -97,10 +97,16 @@ const callLLMAPI = async (messages, model, settings) => {
         const data = await response.json();
         return data.candidates?.[0]?.content?.parts?.[0]?.text || "未生成内容";
       } else {
-        // OpenAI 兼容模式 (适配 Coding Plan 等第三方)
-        if (!apiKey) throw new Error("API_KEY_MISSING");
-        const baseUrl = settings.baseUrl.replace(/\/$/, '');
-        const url = `${baseUrl}/chat/completions`;
+        // OpenAI 兼容模式 (适配 DashScope 等第三方)
+        const isLocalDev = typeof window !== 'undefined' && 
+                          (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        
+        // 在本地开发中需要API KEY，在Vercel上由后端提供
+        if (isLocalDev && !apiKey) throw new Error("API_KEY_MISSING");
+        
+        // 在Vercel上使用后端API代理，本地使用代理
+        const apiUrl = isLocalDev ? '/api/chat/completions' : '/api/chat';
+        
         const openaiMessages = messages.map(msg => {
           let content = msg.text;
           if (msg.images && msg.images.length > 0) {
@@ -112,19 +118,25 @@ const callLLMAPI = async (messages, model, settings) => {
           return { role: msg.role, content: content };
         });
 
-        const response = await fetch(url, {
+        const headers = {
+          "Content-Type": "application/json"
+        };
+        
+        // 在本地开发中添加Authorization header
+        if (isLocalDev) {
+          headers["Authorization"] = `Bearer ${apiKey}`;
+        }
+
+        const response = await fetch(apiUrl, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
-          },
+          headers: headers,
           body: JSON.stringify({
             model: model,
             messages: openaiMessages
           })
         });
 
-        if (!response.ok) throw new Error("第三方 API 请求失败，请检查配置与网络");
+        if (!response.ok) throw new Error("API 请求失败，请检查配置与网络");
         const data = await response.json();
         return data.choices?.[0]?.message?.content || "未生成内容";
       }
